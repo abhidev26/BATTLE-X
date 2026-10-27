@@ -1,5 +1,6 @@
-import React, { useState } from 'react'
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+
+import { useState } from 'react'
+import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
 import { NotificationProvider } from './context/NotificationContext'
 import ProtectedRoute from './components/ui/ProtectedRoute'
@@ -35,7 +36,11 @@ export default function App() {
   const [showLoading, setShowLoading] = useState(true)
 
   if (showLoading) {
-    return <LoadingScreen onComplete={() => setShowLoading(false)} />
+    return (
+      <LoadingScreen
+        onComplete={() => setShowLoading(false)}
+      />
+    )
   }
 
   return (
@@ -43,14 +48,20 @@ export default function App() {
       <NotificationProvider>
         <BrowserRouter>
           <Routes>
-            {/* Public Routes */}
+            {/* Public routes */}
             <Route path="/" element={<Landing />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
 
-            {/* Authenticated Routes with Dashboard Layout */}
-            <Route element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
+            {/* Protected player routes */}
+            <Route
+              element={
+                <ProtectedRoute>
+                  <DashboardLayout />
+                </ProtectedRoute>
+              }
+            >
               <Route path="/dashboard" element={<Home />} />
               <Route path="/lobby" element={<Lobby />} />
               <Route path="/matchmaking" element={<Matchmaking />} />
@@ -63,15 +74,21 @@ export default function App() {
               <Route path="/settings" element={<Settings />} />
             </Route>
 
-            {/* Admin Routes */}
-            <Route element={<ProtectedRoute requiredRole="ADMIN"><AdminLayout /></ProtectedRoute>}>
+            {/* Protected admin routes */}
+            <Route
+              element={
+                <ProtectedRoute requiredRole="ADMIN">
+                  <AdminLayout />
+                </ProtectedRoute>
+              }
+            >
               <Route path="/admin" element={<AdminOverview />} />
               <Route path="/admin/users" element={<AdminUsers />} />
               <Route path="/admin/analytics" element={<AdminAnalytics />} />
               <Route path="/admin/reports" element={<AdminReports />} />
             </Route>
 
-            {/* Error Routes */}
+            {/* Error routes */}
             <Route path="/unauthorized" element={<Unauthorized />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
