@@ -1,140 +1,120 @@
-import React, { useState, useEffect } from 'react'
-import { motion } from 'framer-motion'
-import { Shield, Check, X, RefreshCw, Radio } from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
-import Button from '@/components/ui/Button'
-import Badge from '@/components/ui/Badge'
-import Card from '@/components/ui/Card'
+
+import { useEffect, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { motion } from "framer-motion";
+import { ArrowLeft, Crosshair, LoaderCircle, MapPin, Shield, Swords, Users, XCircle } from "lucide-react";
 
 export default function Matchmaking() {
-  const navigate = useNavigate()
-  const [seconds, setSeconds] = useState(0)
-  const [statusText, setStatusText] = useState('SCANNING SERVERS...')
-  const [matchFound, setMatchFound] = useState(false)
-  const [ready, setReady] = useState(false)
-  const [countdown, setCountdown] = useState(15)
+  const navigate = useNavigate();
+  const [params] = useSearchParams();
+  const mode = params.get("mode") || "squad";
+  const map = params.get("map") || "erangel";
+  const region = params.get("region") || "Asia";
+  const [seconds, setSeconds] = useState(0);
+  const [cancelled, setCancelled] = useState(false);
 
   useEffect(() => {
-    if (matchFound) return
-    const timer = setInterval(() => {
-      setSeconds(prev => prev + 1)
-    }, 1000)
+    if (cancelled) return undefined;
+    const timer = window.setInterval(() => setSeconds((value) => value + 1), 1000);
+    return () => window.clearInterval(timer);
+  }, [cancelled]);
 
-    return () => clearInterval(timer)
-  }, [matchFound])
-
-  useEffect(() => {
-    if (seconds === 2) setStatusText('ANALYZING SKILL RATING...')
-    if (seconds === 4) setStatusText('MATCHING OPERATORS...')
-    if (seconds === 6 && !matchFound) {
-      setMatchFound(true)
-    }
-  }, [seconds, matchFound])
-
-  useEffect(() => {
-    if (!matchFound) return
-    const cd = setInterval(() => {
-      setCountdown(prev => {
-        if (prev <= 1) {
-          clearInterval(cd)
-          navigate('/room/r001')
-          return 0
-        }
-        return prev - 1
-      })
-    }, 1000)
-    return () => clearInterval(cd)
-  }, [matchFound, navigate])
-
-  const formatTime = (totalSeconds) => {
-    const mins = Math.floor(totalSeconds / 60).toString().padStart(2, '0')
-    const secs = (totalSeconds % 60).toString().padStart(2, '0')
-    return `${mins}:${secs}`
-  }
+  const time = `${String(Math.floor(seconds / 60)).padStart(2, "0")}:${String(seconds % 60).padStart(2, "0")}`;
 
   return (
-    <div className="min-h-[85vh] flex items-center justify-center relative overflow-hidden bg-grid">
-      {/* Background Animated Rings */}
-      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-        <motion.div
-          animate={{ scale: [1, 1.8, 1], opacity: [0.1, 0.3, 0.1] }}
-          transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
-          className="w-96 h-96 rounded-full border border-bz-red/30"
-        />
-        <motion.div
-          animate={{ scale: [1, 2.4, 1], opacity: [0.05, 0.2, 0.05] }}
-          transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
-          className="w-[500px] h-[500px] rounded-full border border-bz-red/20"
-        />
-      </div>
-
-      {!matchFound ? (
-        <Card variant="glass" className="w-full max-w-lg p-8 text-center space-y-6 relative z-10 border-bz-red/40 shadow-red-glow">
-          <div className="relative w-32 h-32 mx-auto flex items-center justify-center">
-            <motion.div
-              animate={{ rotate: 360 }}
-              transition={{ duration: 8, repeat: Infinity, ease: 'linear' }}
-              className="absolute inset-0 rounded-full border-2 border-dashed border-bz-red"
-            />
-            <Radio className="w-12 h-12 text-bz-red animate-pulse" />
-          </div>
-
-          <div>
-            <Badge variant="red" className="mb-2">TACTICAL MATCHMAKING</Badge>
-            <h1 className="heading-section text-2xl">FINDING MATCH</h1>
-            <p className="text-bz-gray font-mono text-sm mt-1">{statusText}</p>
-          </div>
-
-          <div className="p-4 bg-bz-surface2/80 rounded border border-bz-border font-mono">
-            <span className="text-xs text-bz-gray block mb-1">ELAPSED TIME</span>
-            <span className="text-3xl font-bold text-bz-white tracking-widest">{formatTime(seconds)}</span>
-          </div>
-
-          <div className="flex justify-between text-xs font-mono text-bz-gray px-4">
-            <span>MODE: SOLO BATTLE</span>
-            <span>PING: ~24 ms</span>
-          </div>
-
-          <Button variant="danger" className="w-full" icon={X} onClick={() => navigate('/lobby')}>
-            CANCEL SEARCH
-          </Button>
-        </Card>
-      ) : (
-        <Card variant="default" className="w-full max-w-lg p-8 text-center space-y-6 relative z-10 border-bz-green/50 bg-bz-surface shadow-[0_0_30px_rgba(0,255,136,0.2)]">
-          <motion.div initial={{ scale: 0.5, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="space-y-4">
-            <div className="w-20 h-20 mx-auto rounded-full bg-bz-green/20 border-2 border-bz-green flex items-center justify-center text-bz-green">
-              <Check className="w-10 h-10" />
+    <main className="flex min-h-screen items-center justify-center bg-bz-dark p-4 text-white">
+      <motion.section
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="w-full max-w-2xl overflow-hidden rounded-3xl border border-bz-border bg-bz-panel"
+      >
+        <div className="relative overflow-hidden border-b border-bz-border p-7 text-center sm:p-10">
+          <div className="pointer-events-none absolute left-1/2 top-0 h-48 w-48 -translate-x-1/2 rounded-full bg-bz-red/20 blur-3xl" />
+          <div className="relative">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl border border-bz-red/40 bg-bz-red/10 text-bz-red">
+              {cancelled ? <XCircle size={30} /> : <LoaderCircle size={30} className="animate-spin" />}
             </div>
+            <p className="mt-6 text-xs font-black tracking-[0.3em] text-bz-red">BATTLE X / MATCH SERVICES</p>
+            <h1 className="mt-3 text-3xl font-black sm:text-4xl">
+              {cancelled ? "QUEUE CANCELLED" : "SEARCHING FOR PLAYERS"}
+            </h1>
+            <p className="mt-3 text-sm text-bz-muted">
+              {cancelled ? "Your demo queue has stopped." : "Scanning the selected region for a suitable match..."}
+            </p>
+            {!cancelled && (
+              <div className="mt-6 font-mono text-4xl font-black tracking-widest">{time}</div>
+            )}
+          </div>
+        </div>
 
-            <div>
-              <Badge variant="green" size="md">MATCH FOUND!</Badge>
-              <h2 className="heading-section text-2xl text-bz-white mt-2">CRIMSON VALLEY</h2>
-              <p className="text-bz-gray font-mono text-xs mt-1">SOLO BATTLE ROYALE • 20 OPERATORS</p>
+        <div className="space-y-4 p-6 sm:p-8">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <div className="rounded-xl border border-bz-border bg-bz-dark p-4">
+              <MapPin size={18} className="mb-3 text-bz-red" />
+              <div className="text-[10px] font-bold tracking-widest text-bz-muted">BATTLEFIELD</div>
+              <div className="mt-1 font-black uppercase">{map}</div>
             </div>
-
-            <div className="p-4 bg-bz-surface2 rounded border border-bz-border font-mono space-y-1">
-              <span className="text-xs text-bz-gray block">AUTO-START IN</span>
-              <span className="text-4xl font-bold text-bz-gold">{countdown}s</span>
+            <div className="rounded-xl border border-bz-border bg-bz-dark p-4">
+              <Users size={18} className="mb-3 text-bz-red" />
+              <div className="text-[10px] font-bold tracking-widest text-bz-muted">GAME MODE</div>
+              <div className="mt-1 font-black uppercase">{mode}</div>
             </div>
+            <div className="rounded-xl border border-bz-border bg-bz-dark p-4">
+              <Shield size={18} className="mb-3 text-bz-red" />
+              <div className="text-[10px] font-bold tracking-widest text-bz-muted">REGION</div>
+              <div className="mt-1 font-black">{region}</div>
+            </div>
+          </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <Button
-                variant={ready ? 'primary' : 'outline'}
-                className={ready ? 'bg-bz-green border-bz-green text-black hover:bg-bz-green-dim' : ''}
-                onClick={() => {
-                  setReady(true)
-                  setTimeout(() => navigate('/room/r001'), 1500)
-                }}
+          {!cancelled && (
+            <div className="rounded-xl border border-bz-border bg-bz-dark p-4">
+              <div className="mb-3 flex items-center justify-between text-xs">
+                <span className="font-bold text-bz-muted">Searching status</span>
+                <span className="animate-pulse font-black text-bz-red">IN PROGRESS</span>
+              </div>
+              <div className="h-2 overflow-hidden rounded-full bg-bz-border">
+                <motion.div
+                  className="h-full rounded-full bg-bz-red"
+                  animate={{ x: ["-100%", "100%"] }}
+                  transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
+                  style={{ width: "45%" }}
+                />
+              </div>
+              <p className="mt-3 text-xs text-bz-muted">
+                This is a simulated queue. No real players are being matched yet.
+              </p>
+            </div>
+          )}
+
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <button
+              type="button"
+              onClick={() => navigate("/lobby")}
+              className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-bz-border px-4 py-3 text-sm font-bold transition hover:border-bz-red"
+            >
+              <ArrowLeft size={16} /> Back to lobby
+            </button>
+            {!cancelled && (
+              <button
+                type="button"
+                onClick={() => setCancelled(true)}
+                className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-bz-red px-4 py-3 text-sm font-black transition hover:bg-red-600"
               >
-                {ready ? 'READY ✓' : 'ACCEPT MATCH'}
-              </Button>
-              <Button variant="danger" icon={X} onClick={() => navigate('/lobby')}>
-                DECLINE
-              </Button>
-            </div>
-          </motion.div>
-        </Card>
-      )}
-    </div>
-  )
+                <XCircle size={16} /> Cancel search
+              </button>
+            )}
+            {cancelled && (
+              <button
+                type="button"
+                onClick={() => navigate("/lobby")}
+                className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-bz-red px-4 py-3 text-sm font-black transition hover:bg-red-600"
+              >
+                <Swords size={16} /> Choose another match
+              </button>
+            )}
+          </div>
+        </div>
+      </motion.section>
+    </main>
+  );
 }
