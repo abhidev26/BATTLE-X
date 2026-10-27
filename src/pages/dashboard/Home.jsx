@@ -1,222 +1,201 @@
-import React from 'react'
-import { motion } from 'framer-motion'
-import { Trophy, Crosshair, Zap, Coins, ArrowRight, Play, Users, Target, Shield } from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
-import { useAuth } from '@/context/AuthContext'
-import StatCard from '@/components/ui/StatCard'
-import ProgressBar from '@/components/ui/ProgressBar'
-import Card from '@/components/ui/Card'
-import Button from '@/components/ui/Button'
-import Badge from '@/components/ui/Badge'
-import { mockMatches, mockMissions, mockLeaderboard, mockAchievements } from '@/utils/mockData'
+
+import { motion } from "framer-motion";
+import {
+  Activity,
+  ArrowUpRight,
+  Crosshair,
+  Gamepad2,
+  Medal,
+  Shield,
+  Swords,
+  Target,
+  Trophy,
+  Users,
+  Zap,
+} from "lucide-react";
+
+const stats = [
+  { label: "TOTAL MATCHES", value: "128", change: "+12 this week", icon: Gamepad2 },
+  { label: "WIN RATE", value: "24.8%", change: "+3.2% this month", icon: Trophy },
+  { label: "TOTAL KILLS", value: "846", change: "+86 this week", icon: Crosshair },
+  { label: "K/D RATIO", value: "2.64", change: "Top performance", icon: Target },
+];
+
+const matches = [
+  { map: "Erangel", mode: "Ranked • Squad", result: "VICTORY", kills: 12, xp: "+840 XP", color: "#ef233c" },
+  { map: "Miramar", mode: "Classic • Duo", result: "TOP 10", kills: 7, xp: "+420 XP", color: "#ffc857" },
+  { map: "Sanhok", mode: "Ranked • Squad", result: "ELIMINATED", kills: 5, xp: "+260 XP", color: "#8b95a7" },
+];
+
+const activities = [
+  { title: "Match completed", detail: "Erangel • 12 eliminations", time: "8 min ago" },
+  { title: "Rank points earned", detail: "+48 competitive points", time: "32 min ago" },
+  { title: "Daily mission progress", detail: "Play 3 matches • 2/3", time: "1 hour ago" },
+];
+
+function SectionTitle({ children, action }) {
+  return (
+    <div className="mb-5 flex items-center justify-between gap-3">
+      <h2 className="text-lg font-black uppercase tracking-wider text-white">{children}</h2>
+      {action && <span className="text-xs font-bold uppercase tracking-wider text-bz-muted">{action}</span>}
+    </div>
+  );
+}
 
 export default function Home() {
-  const { user } = useAuth()
-  const navigate = useNavigate()
-  const player = user || {}
-  const stats = player.stats || { wins: 94, kdRatio: 5.92, matches: 287 }
-
   return (
-    <div className="space-y-6">
-      {/* Announcement Banner */}
-      <motion.div
-        initial={{ opacity: 0, y: -10 }}
+    <div className="min-h-screen space-y-7 bg-bz-dark p-4 text-white sm:p-6 lg:p-8">
+      <motion.header
+        initial={{ opacity: 0, y: 18 }}
         animate={{ opacity: 1, y: 0 }}
-        className="card-red p-4 flex items-center justify-between border-l-4 border-bz-red"
+        transition={{ duration: 0.45 }}
+        className="relative overflow-hidden rounded-3xl border border-bz-border bg-bz-panel p-6 sm:p-9"
       >
-        <div className="flex items-center gap-3">
-          <Badge variant="red">SEASON 5</Badge>
-          <p className="text-sm font-medium text-bz-white">
-            <span className="text-bz-red font-bold">EVENT ACTIVE:</span> CRIMSON PROTOCOL — Double XP and exclusive cosmetics live now!
-          </p>
-        </div>
-        <Button variant="ghost" size="sm" onClick={() => navigate('/lobby')}>
-          JOIN EVENT
-        </Button>
-      </motion.div>
-
-      {/* Header Welcome */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-bz-border pb-4">
-        <div>
-          <h1 className="heading-section text-2xl md:text-3xl">
-            WELCOME BACK, <span className="text-gradient-red">{player.displayName || player.username || 'OPERATOR'}</span>
-          </h1>
-          <p className="text-muted text-sm mt-1">COMMAND CENTER ACTIVE • SYSTEM STATUS: OPTIMAL</p>
-        </div>
-        <Button variant="primary" icon={Play} onClick={() => navigate('/lobby')}>
-          ENTER BATTLE LOBBY
-        </Button>
-      </div>
-
-      {/* Stat Cards Row */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <StatCard label="TOTAL WINS" value={stats.wins || 94} icon={Trophy} color="gold" change={3} />
-        <StatCard label="K/D RATIO" value={stats.kdRatio || 5.92} icon={Crosshair} color="red" change={0.4} />
-        <StatCard label="LEVEL" value={player.level || 42} icon={Zap} color="cyan" change={1} />
-        <StatCard label="CREDITS" value={player.coins || 4850} icon={Coins} color="gold" />
-      </div>
-
-      {/* XP Level Progress */}
-      <Card variant="glass" className="p-5">
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-3">
-            <Badge variant="red" size="md">LVL {player.level || 42}</Badge>
-            <span className="font-display font-bold text-sm tracking-wider text-bz-white">LEVEL PROGRESSION</span>
+        <div className="pointer-events-none absolute -right-12 -top-24 h-64 w-64 rounded-full bg-bz-red opacity-10 blur-3xl" />
+        <div className="relative z-10 flex flex-col justify-between gap-7 md:flex-row md:items-center">
+          <div>
+            <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-bz-red/30 bg-bz-red/10 px-3 py-1.5 text-xs font-bold uppercase tracking-widest text-bz-red">
+              <span className="h-2 w-2 animate-pulse rounded-full bg-bz-red" />
+              Combat operations online
+            </div>
+            <h1 className="text-3xl font-black tracking-tight sm:text-5xl">
+              WELCOME BACK, <span className="text-bz-red">SOLDIER.</span>
+            </h1>
+            <p className="mt-3 max-w-xl text-sm leading-6 text-bz-muted sm:text-base">
+              Your battlefield overview is ready. Review your performance, track your progress, and prepare for the next drop.
+            </p>
           </div>
-          <span className="font-mono text-xs text-bz-gray">
-            {(player.xp || 18450).toLocaleString()} / {(player.xpToNext || 20000).toLocaleString()} XP
-          </span>
+          <a
+            href="/lobby"
+            className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-bz-red px-6 py-4 text-sm font-black uppercase tracking-wider text-white transition hover:scale-[1.03] hover:bg-red-600"
+          >
+            <Swords size={18} /> Enter Battlefield <ArrowUpRight size={17} />
+          </a>
         </div>
-        <ProgressBar value={((player.xp || 18450) / (player.xpToNext || 20000)) * 100} color="red" height="md" animated />
-      </Card>
+      </motion.header>
 
-      {/* Main Grid Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column - Matches & Missions */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Quick Play Panel */}
-          <Card variant="default" className="p-6 relative overflow-hidden bg-gradient-to-r from-bz-surface to-bz-red-dark/30 border-bz-red/30">
-            <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-              <div>
-                <Badge variant="gold" className="mb-2">FEATURED MODE</Badge>
-                <h2 className="heading-section text-xl">SOLO BATTLE ROYALE</h2>
-                <p className="text-muted text-sm max-w-md mt-1">
-                  20 Operators enter the Crimson Valley. 1 Operator survives. Shrinking safe zone combat.
-                </p>
-              </div>
-              <Button variant="primary" size="lg" icon={Play} className="w-full sm:w-auto shadow-red-glow" onClick={() => navigate('/lobby')}>
-                DEPLY NOW
-              </Button>
-            </div>
-          </Card>
-
-          {/* Recent Matches */}
-          <Card variant="default" className="p-5">
-            <div className="flex items-center justify-between mb-4 pb-2 border-b border-bz-border">
-              <h3 className="font-display font-bold text-lg text-bz-white uppercase">RECENT MATCH COMBAT LOG</h3>
-              <Button variant="ghost" size="sm" icon={ArrowRight} onClick={() => navigate('/matches')}>
-                VIEW ALL
-              </Button>
-            </div>
-            <div className="space-y-3">
-              {mockMatches.slice(0, 4).map((match) => (
-                <div key={match.id} className="flex items-center justify-between p-3 bg-bz-surface2 rounded border border-bz-border/50 hover:border-bz-red/30 transition-all">
-                  <div className="flex items-center gap-3">
-                    <span className={`w-2 h-10 rounded-full ${match.result === 'WIN' ? 'bg-bz-green' : 'bg-bz-red'}`} />
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-display font-bold text-sm text-bz-white">{match.mode}</span>
-                        <Badge variant="gray">{match.map}</Badge>
-                      </div>
-                      <span className="text-xs text-bz-gray font-mono">{match.date} • {match.duration}</span>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-6 font-mono text-sm">
-                    <div className="text-right">
-                      <span className="text-bz-gray text-xs block">RANK</span>
-                      <span className={match.placement === 1 ? 'text-bz-gold font-bold' : 'text-bz-white'}>#{match.placement}</span>
-                    </div>
-                    <div className="text-right">
-                      <span className="text-bz-gray text-xs block">KILLS</span>
-                      <span className="text-bz-red font-bold">{match.kills}</span>
-                    </div>
-                    <Badge variant={match.result === 'WIN' ? 'green' : 'red'}>{match.result}</Badge>
-                  </div>
+      <section>
+        <SectionTitle action="Performance overview">Combat statistics</SectionTitle>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          {stats.map((stat, index) => {
+            const Icon = stat.icon;
+            return (
+              <motion.article
+                key={stat.label}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.08, duration: 0.4 }}
+                whileHover={{ y: -5 }}
+                className="rounded-2xl border border-bz-border bg-bz-panel p-5"
+              >
+                <div className="mb-5 flex items-center justify-between">
+                  <span className="text-xs font-bold tracking-widest text-bz-muted">{stat.label}</span>
+                  <div className="rounded-xl bg-bz-red/10 p-2.5 text-bz-red"><Icon size={20} /></div>
                 </div>
-              ))}
-            </div>
-          </Card>
-
-          {/* Active Missions */}
-          <Card variant="default" className="p-5">
-            <div className="flex items-center justify-between mb-4 pb-2 border-b border-bz-border">
-              <h3 className="font-display font-bold text-lg text-bz-white uppercase">ACTIVE OPERATOR MISSIONS</h3>
-              <Badge variant="red">RESET IN 14H</Badge>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {mockMissions.map((m) => (
-                <div key={m.id} className="p-3 bg-bz-surface2 rounded border border-bz-border space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="font-display font-bold text-xs text-bz-white">{m.name}</span>
-                    <Badge variant={m.type === 'DAILY' ? 'cyan' : 'gold'}>{m.type}</Badge>
-                  </div>
-                  <p className="text-xs text-bz-gray">{m.description}</p>
-                  <ProgressBar value={(m.progress / m.total) * 100} color={m.type === 'DAILY' ? 'cyan' : 'gold'} height="sm" />
-                  <div className="flex items-center justify-between text-xs font-mono pt-1">
-                    <span className="text-bz-gray">{m.progress}/{m.total}</span>
-                    <span className="text-bz-gold">+{m.reward} CREDITS</span>
-                  </div>
+                <div className="text-3xl font-black tracking-tight">{stat.value}</div>
+                <div className="mt-2 flex items-center gap-1.5 text-xs font-semibold text-bz-green">
+                  <ArrowUpRight size={14} /> {stat.change}
                 </div>
-              ))}
-            </div>
-          </Card>
+              </motion.article>
+            );
+          })}
         </div>
+      </section>
 
-        {/* Right Column - Leaderboard & Achievements */}
-        <div className="space-y-6">
-          {/* Top Leaderboard Snippet */}
-          <Card variant="default" className="p-5">
-            <div className="flex items-center justify-between mb-4 pb-2 border-b border-bz-border">
-              <h3 className="font-display font-bold text-base text-bz-white uppercase">TOP OPERATORS</h3>
-              <Button variant="ghost" size="sm" onClick={() => navigate('/leaderboard')}>ALL</Button>
-            </div>
-            <div className="space-y-3">
-              {mockLeaderboard.slice(0, 4).map((op) => (
-                <div key={op.rank} className={`flex items-center justify-between p-2.5 rounded ${op.isCurrentPlayer ? 'bg-bz-red/10 border border-bz-red/40' : 'bg-bz-surface2'}`}>
-                  <div className="flex items-center gap-3">
-                    <span className={`font-mono font-bold text-sm w-6 text-center ${op.rank === 1 ? 'text-bz-gold' : op.rank === 2 ? 'text-gray-300' : 'text-amber-600'}`}>
-                      #{op.rank}
-                    </span>
-                    <div>
-                      <span className="font-display font-bold text-xs text-bz-white block">{op.username}</span>
-                      <span className="text-[10px] text-bz-gray font-mono">LVL {op.level} • {op.kills} KILLS</span>
-                    </div>
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
+        <section className="rounded-2xl border border-bz-border bg-bz-panel p-5 sm:p-6 xl:col-span-2">
+          <SectionTitle action="Latest activity">Recent matches</SectionTitle>
+          <div className="space-y-3">
+            {matches.map((match, index) => (
+              <motion.div
+                key={match.map}
+                initial={{ opacity: 0, x: -12 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.2 + index * 0.1 }}
+                className="flex flex-col gap-4 rounded-xl border border-bz-border bg-bz-dark/70 p-4 sm:flex-row sm:items-center sm:justify-between"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="rounded-xl border border-bz-border p-3" style={{ color: match.color }}>
+                    <Shield size={22} />
                   </div>
-                  <span className="font-mono font-bold text-xs text-bz-red">{op.kd} K/D</span>
+                  <div>
+                    <div className="font-extrabold">{match.map}</div>
+                    <div className="mt-1 text-xs text-bz-muted">{match.mode}</div>
+                  </div>
                 </div>
-              ))}
-            </div>
-          </Card>
+                <div className="flex items-center justify-between gap-5 sm:justify-end">
+                  <div>
+                    <div className="text-xs font-black" style={{ color: match.color }}>{match.result}</div>
+                    <div className="mt-1 text-xs text-bz-muted">{match.kills} eliminations</div>
+                  </div>
+                  <div className="text-right">
+                    <div className="font-bold text-white">{match.xp}</div>
+                    <div className="mt-1 text-xs text-bz-muted">Experience</div>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+          <a href="/matches" className="mt-5 inline-flex items-center gap-2 text-sm font-bold text-bz-red hover:text-white">
+            View all matches <ArrowUpRight size={16} />
+          </a>
+        </section>
 
-          {/* Featured Achievement */}
-          <Card variant="glass" className="p-5">
-            <h3 className="font-display font-bold text-base text-bz-white uppercase mb-3">LATEST UNLOCKED</h3>
-            {mockAchievements.filter(a => a.unlocked)[0] && (
-              <div className="flex items-center gap-4 bg-bz-surface2 p-3 rounded border border-bz-gold/30">
-                <span className="text-3xl">{mockAchievements.filter(a => a.unlocked)[0].icon}</span>
+        <section className="rounded-2xl border border-bz-border bg-bz-panel p-5 sm:p-6">
+          <SectionTitle>Live activity</SectionTitle>
+          <div className="mb-5 flex items-center gap-2 text-xs font-bold text-bz-green">
+            <Activity size={15} /> SYSTEM OPERATIONAL
+          </div>
+          <div className="space-y-5">
+            {activities.map((activity, index) => (
+              <div key={activity.title} className="flex gap-3">
+                <div className="mt-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-bz-red/10 text-bz-red">
+                  {index === 0 ? <Swords size={17} /> : index === 1 ? <Zap size={17} /> : <Medal size={17} />}
+                </div>
                 <div>
-                  <h4 className="font-display font-bold text-sm text-bz-gold">{mockAchievements.filter(a => a.unlocked)[0].name}</h4>
-                  <p className="text-xs text-bz-gray mt-0.5">{mockAchievements.filter(a => a.unlocked)[0].description}</p>
-                  <span className="text-[10px] font-mono text-bz-green block mt-1">+{mockAchievements.filter(a => a.unlocked)[0].xpReward} XP REWARD</span>
+                  <div className="text-sm font-bold">{activity.title}</div>
+                  <div className="mt-1 text-xs text-bz-muted">{activity.detail}</div>
+                  <div className="mt-2 text-[11px] text-bz-muted">{activity.time}</div>
                 </div>
               </div>
-            )}
-          </Card>
-
-          {/* Platform Status Card */}
-          <Card variant="default" className="p-5 space-y-3">
-            <h3 className="font-display font-bold text-base text-bz-white uppercase">SYSTEM TELEMETRY</h3>
-            <div className="space-y-2 text-xs font-mono">
-              <div className="flex justify-between text-bz-gray">
-                <span>ONLINE PLAYERS:</span>
-                <span className="text-bz-green font-bold">3,847</span>
-              </div>
-              <div className="flex justify-between text-bz-gray">
-                <span>ACTIVE MATCHES:</span>
-                <span className="text-bz-white font-bold">412</span>
-              </div>
-              <div className="flex justify-between text-bz-gray">
-                <span>SERVER PING:</span>
-                <span className="text-bz-green font-bold">24 ms</span>
-              </div>
-              <div className="flex justify-between text-bz-gray">
-                <span>REGION:</span>
-                <span className="text-bz-cyan font-bold">NORTH AMERICA (EAST)</span>
-              </div>
-            </div>
-          </Card>
-        </div>
+            ))}
+          </div>
+        </section>
       </div>
+
+      <section className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <motion.div whileHover={{ scale: 1.01 }} className="rounded-2xl border border-bz-border bg-bz-panel p-6">
+          <div className="flex items-start justify-between">
+            <div>
+              <div className="text-xs font-bold tracking-widest text-bz-muted">COMPETITIVE RANK</div>
+              <div className="mt-3 text-2xl font-black">Platinum III</div>
+              <div className="mt-2 text-sm text-bz-muted">640 / 800 rank points</div>
+            </div>
+            <div className="rounded-2xl bg-bz-red/10 p-3 text-bz-red"><Trophy size={26} /></div>
+          </div>
+          <div className="mt-5 h-2 overflow-hidden rounded-full bg-bz-border">
+            <motion.div initial={{ width: 0 }} animate={{ width: "80%" }} transition={{ duration: 1 }} className="h-full rounded-full bg-bz-red" />
+          </div>
+        </motion.div>
+
+        <motion.div whileHover={{ scale: 1.01 }} className="rounded-2xl border border-bz-border bg-bz-panel p-6">
+          <div className="flex items-start justify-between">
+            <div>
+              <div className="text-xs font-bold tracking-widest text-bz-muted">SQUAD STATUS</div>
+              <div className="mt-3 text-2xl font-black">Ready to deploy</div>
+              <div className="mt-2 text-sm text-bz-muted">Find teammates and join your next match.</div>
+            </div>
+            <div className="rounded-2xl bg-bz-red/10 p-3 text-bz-red"><Users size={26} /></div>
+          </div>
+          <a href="/lobby" className="mt-5 inline-flex items-center gap-2 rounded-lg border border-bz-border px-4 py-2.5 text-xs font-black uppercase tracking-wider transition hover:border-bz-red hover:text-bz-red">
+            Find a squad <ArrowUpRight size={15} />
+          </a>
+        </motion.div>
+      </section>
+
+      <p className="pb-3 text-center text-xs text-bz-muted">
+        BATTLE X COMMAND CENTER · Demo statistics only · Backend integration planned
+      </p>
     </div>
-  )
+  );
 }
