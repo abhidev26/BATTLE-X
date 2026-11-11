@@ -1,458 +1,281 @@
-import { useState, useMemo } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+
+import { useMemo, useState } from "react";
+import { motion } from "framer-motion";
 import {
-  Coins, Package, SlidersHorizontal, Check, ChevronDown,
-  Sword, Shield, Zap, Star, Search, Eye
-} from 'lucide-react'
-import { clsx } from 'clsx'
-import { mockWeapons, mockInventoryItems, mockPlayer } from '@/utils/mockData'
+  Search,
+  Shield,
+  Sword,
+  Shirt,
+  Package,
+  Sparkles,
+  Lock,
+  Check,
+  X,
+  Gift,
+  Zap,
+} from "lucide-react";
 
-// ─── Constants ────────────────────────────────────────────────────────────────
+const initialItems = [
+  { id: 1, name: "Inferno AKM", type: "Weapons", rarity: "Legendary", icon: "🔥", color: "text-orange-400", description: "A fiery legendary assault rifle skin." },
+  { id: 2, name: "Phantom M416", type: "Weapons", rarity: "Epic", icon: "⚡", color: "text-purple-400", description: "A futuristic weapon skin." },
+  { id: 3, name: "Shadow Sniper", type: "Weapons", rarity: "Rare", icon: "🎯", color: "text-blue-400", description: "A precision-inspired sniper skin." },
+  { id: 4, name: "Royal Commander", type: "Outfits", rarity: "Legendary", icon: "👑", color: "text-orange-400", description: "A premium commander outfit." },
+  { id: 5, name: "Night Assassin", type: "Outfits", rarity: "Epic", icon: "🥷", color: "text-purple-400", description: "A stealth-themed character outfit." },
+  { id: 6, name: "Combat Helmet", type: "Accessories", rarity: "Rare", icon: "🪖", color: "text-blue-400", description: "A tactical helmet cosmetic." },
+  { id: 7, name: "Golden Backpack", type: "Accessories", rarity: "Epic", icon: "🎒", color: "text-purple-400", description: "A golden backpack cosmetic." },
+  { id: 8, name: "Victory Emote", type: "Accessories", rarity: "Common", icon: "🏆", color: "text-gray-300", description: "Celebrate your battlefield victories." },
+];
 
-const CATEGORIES = ['ALL', 'WEAPONS', 'SKINS', 'CHARACTERS', 'EMOTES', 'BANNERS', 'BADGES', 'CONSUMABLES']
-const SORT_OPTIONS = ['BY NAME', 'BY RARITY', 'BY RECENTLY ACQUIRED']
-const RARITIES = ['LEGENDARY', 'EPIC', 'RARE', 'COMMON']
+const categories = ["All", "Weapons", "Outfits", "Accessories"];
 
-const RARITY_ORDER = { LEGENDARY: 0, EPIC: 1, RARE: 2, COMMON: 3 }
-const RARITY_COLORS = {
-  LEGENDARY: 'text-bz-gold border-bz-gold/40 bg-bz-gold/10',
-  EPIC: 'text-purple-400 border-purple-400/40 bg-purple-400/10',
-  RARE: 'text-blue-400 border-blue-400/40 bg-blue-400/10',
-  COMMON: 'text-bz-gray border-bz-gray/40 bg-bz-gray/10',
-}
-
-const CATEGORY_ICONS = {
-  SKINS: '🎨', CHARACTERS: '🧑‍🚀', EMOTES: '💃', BANNERS: '🚩', BADGES: '🏅', CONSUMABLES: '🧪', WEAPONS: '🔫',
-}
-
-// ─── Sub-components ───────────────────────────────────────────────────────────
-
-function RarityBadge({ rarity }) {
-  return (
-    <span className={clsx('px-2 py-0.5 rounded border text-[10px] font-mono font-bold uppercase', RARITY_COLORS[rarity] || 'badge-gray')}>
-      {rarity}
-    </span>
-  )
-}
-
-function StatBar({ label, value, max = 100, color = '#ff1a1a' }) {
-  const pct = Math.min((value / max) * 100, 100)
-  return (
-    <div className="flex items-center gap-2">
-      <span className="text-bz-gray text-[9px] font-mono w-14 uppercase shrink-0">{label}</span>
-      <div className="flex-1 h-1.5 bg-bz-surface2 rounded-full overflow-hidden">
-        <motion.div
-          className="h-full rounded-full"
-          style={{ backgroundColor: color }}
-          initial={{ width: 0 }}
-          animate={{ width: `${pct}%` }}
-          transition={{ duration: 0.8, ease: 'easeOut' }}
-        />
-      </div>
-      <span className="text-bz-gray text-[9px] font-mono w-6 text-right">{value}</span>
-    </div>
-  )
-}
-
-function WeaponCard({ weapon, onEquip }) {
-  const [hovered, setHovered] = useState(false)
-
-  const rarityBorderMap = {
-    LEGENDARY: 'border-bz-gold/40 hover:border-bz-gold/70 hover:shadow-[0_0_14px_rgba(255,215,0,0.15)]',
-    EPIC: 'border-purple-400/30 hover:border-purple-400/60',
-    RARE: 'border-blue-400/30 hover:border-blue-400/60',
-    COMMON: 'border-bz-border hover:border-bz-border',
-  }
-
-  return (
-    <motion.div
-      className={clsx(
-        'card relative overflow-hidden p-4 transition-all duration-300 cursor-pointer',
-        rarityBorderMap[weapon.rarity]
-      )}
-      onHoverStart={() => setHovered(true)}
-      onHoverEnd={() => setHovered(false)}
-      whileHover={{ scale: 1.02, y: -3 }}
-      layout
-    >
-      {/* Rarity accent top */}
-      <div className={clsx(
-        'absolute top-0 left-0 right-0 h-0.5',
-        weapon.rarity === 'LEGENDARY' ? 'bg-bz-gold' :
-          weapon.rarity === 'EPIC' ? 'bg-purple-400' :
-            weapon.rarity === 'RARE' ? 'bg-blue-400' : 'bg-bz-gray/40'
-      )} />
-
-      {/* Top badges */}
-      <div className="flex items-start justify-between mb-3">
-        <span className="badge-gray text-[9px]">{weapon.category}</span>
-        <RarityBadge rarity={weapon.rarity} />
-      </div>
-
-      {/* Icon placeholder */}
-      <div className="flex justify-center mb-3">
-        <div className="text-5xl select-none">🔫</div>
-      </div>
-
-      {/* Name */}
-      <h3 className="font-display text-sm font-bold text-bz-white text-center mb-2">{weapon.name}</h3>
-
-      {/* Key stats row */}
-      <div className="flex justify-between text-[10px] font-mono text-bz-gray mb-3">
-        <span>DMG <span className="text-bz-white font-bold">{weapon.damage}</span></span>
-        <span>RPM <span className="text-bz-white font-bold">{weapon.fireRate}</span></span>
-        <span>MAG <span className="text-bz-white font-bold">{weapon.magazine || '—'}</span></span>
-      </div>
-
-      {/* Animated stat bars */}
-      <AnimatePresence>
-        {(hovered || true) && (
-          <motion.div
-            className="space-y-1.5 mb-3"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-          >
-            <StatBar label="DAMAGE" value={weapon.damage} max={200} color="#ff1a1a" />
-            <StatBar label="RANGE" value={weapon.range} max={100} color="#60a5fa" />
-            <StatBar label="ACCURACY" value={weapon.accuracy} max={100} color="#4ade80" />
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Kills */}
-      <p className="text-bz-gray text-[10px] font-mono text-center mb-3">
-        KILLS: <span className="text-bz-red font-bold">{weapon.kills.toLocaleString()}</span>
-      </p>
-
-      {/* Equip button */}
-      {weapon.owned ? (
-        <motion.button
-          onClick={() => onEquip(weapon.id)}
-          className={clsx(
-            'w-full py-1.5 rounded text-[11px] font-mono font-bold uppercase transition-all',
-            weapon.equipped
-              ? 'bg-bz-green/20 text-bz-green border border-bz-green/40 cursor-default'
-              : 'btn-primary'
-          )}
-          whileTap={{ scale: weapon.equipped ? 1 : 0.97 }}
-        >
-          {weapon.equipped ? '✓ EQUIPPED' : 'EQUIP'}
-        </motion.button>
-      ) : (
-        <button className="w-full py-1.5 rounded text-[11px] font-mono font-bold uppercase text-bz-gray border border-bz-border cursor-not-allowed">
-          LOCKED
-        </button>
-      )}
-    </motion.div>
-  )
-}
-
-function ItemCard({ item, onEquip }) {
-  return (
-    <motion.div
-      className="card p-4 flex flex-col gap-3 hover:border-bz-red/30 transition-all duration-300"
-      whileHover={{ scale: 1.02, y: -3 }}
-      layout
-    >
-      {/* Icon area */}
-      <div className="flex items-center justify-center h-20 rounded-lg bg-bz-surface2 border border-bz-border text-5xl">
-        {CATEGORY_ICONS[item.category] || '📦'}
-      </div>
-
-      <div className="flex items-start justify-between">
-        <div>
-          <h3 className="font-display text-xs font-bold text-bz-white leading-tight">{item.name}</h3>
-          <p className="text-bz-gray text-[10px] font-mono uppercase">{item.category}</p>
-        </div>
-        <RarityBadge rarity={item.rarity} />
-      </div>
-
-      {item.equipped && (
-        <span className="self-start badge-green text-[9px]">EQUIPPED</span>
-      )}
-
-      <div className="flex gap-2 mt-auto">
-        <motion.button
-          onClick={() => onEquip(item.id)}
-          className={clsx(
-            'flex-1 py-1.5 rounded text-[10px] font-mono font-bold uppercase transition-all',
-            item.equipped
-              ? 'bg-bz-green/20 text-bz-green border border-bz-green/40 cursor-default'
-              : 'btn-primary'
-          )}
-          whileTap={{ scale: item.equipped ? 1 : 0.97 }}
-        >
-          {item.equipped ? '✓ EQUIPPED' : 'EQUIP'}
-        </motion.button>
-        <motion.button
-          className="btn-ghost px-2 py-1.5 text-[10px]"
-          whileTap={{ scale: 0.97 }}
-          title="Inspect"
-        >
-          <Eye size={12} />
-        </motion.button>
-      </div>
-    </motion.div>
-  )
-}
-
-// ─── Main Component ───────────────────────────────────────────────────────────
+const rarityStyles = {
+  Legendary: "border-orange-400/40 bg-orange-400/10 text-orange-300",
+  Epic: "border-purple-400/40 bg-purple-400/10 text-purple-300",
+  Rare: "border-blue-400/40 bg-blue-400/10 text-blue-300",
+  Common: "border-gray-400/30 bg-gray-400/10 text-gray-300",
+};
 
 export default function Inventory() {
-  const [activeCategory, setActiveCategory] = useState('ALL')
-  const [sortBy, setSortBy] = useState('BY RARITY')
-  const [rarityFilters, setRarityFilters] = useState([])
-  const [weapons, setWeapons] = useState(mockWeapons)
-  const [items, setItems] = useState(mockInventoryItems)
-  const [showSort, setShowSort] = useState(false)
-
-  const totalItems = weapons.filter(w => w.owned).length + items.length
-
-  // Loadout slots
-  const primary = weapons.find(w => w.equipped && w.category !== 'MELEE' && w.category !== 'PISTOL')
-  const secondary = weapons.find(w => w.equipped && (w.category === 'PISTOL'))
-  const melee = weapons.find(w => w.category === 'MELEE' && w.owned)
-
-  const handleEquipWeapon = (id) => {
-    setWeapons(prev => prev.map(w => ({
-      ...w,
-      equipped: w.id === id ? !w.equipped : (w.id !== id && w.category === prev.find(x => x.id === id)?.category ? false : w.equipped)
-    })))
-  }
-
-  const handleEquipItem = (id) => {
-    setItems(prev => {
-      const target = prev.find(i => i.id === id)
-      return prev.map(i => ({
-        ...i,
-        equipped: i.category === target.category
-          ? i.id === id ? !i.equipped : false
-          : i.equipped
-      }))
-    })
-  }
-
-  const toggleRarity = (r) => {
-    setRarityFilters(prev => prev.includes(r) ? prev.filter(x => x !== r) : [...prev, r])
-  }
-
-  const filteredWeapons = useMemo(() => {
-    let ws = weapons.filter(w => w.owned)
-    if (rarityFilters.length) ws = ws.filter(w => rarityFilters.includes(w.rarity))
-    if (sortBy === 'BY NAME') ws = [...ws].sort((a, b) => a.name.localeCompare(b.name))
-    if (sortBy === 'BY RARITY') ws = [...ws].sort((a, b) => RARITY_ORDER[a.rarity] - RARITY_ORDER[b.rarity])
-    return ws
-  }, [weapons, rarityFilters, sortBy])
+  const [items, setItems] = useState(initialItems);
+  const [category, setCategory] = useState("All");
+  const [search, setSearch] = useState("");
+  const [selected, setSelected] = useState(null);
+  const [crateOpened, setCrateOpened] = useState(false);
+  const [crateReward, setCrateReward] = useState(null);
 
   const filteredItems = useMemo(() => {
-    let its = items
-    if (activeCategory !== 'ALL' && activeCategory !== 'WEAPONS') {
-      its = its.filter(i => i.category === activeCategory)
-    }
-    if (activeCategory === 'WEAPONS') return []
-    if (rarityFilters.length) its = its.filter(i => rarityFilters.includes(i.rarity))
-    if (sortBy === 'BY NAME') its = [...its].sort((a, b) => a.name.localeCompare(b.name))
-    if (sortBy === 'BY RARITY') its = [...its].sort((a, b) => RARITY_ORDER[a.rarity] - RARITY_ORDER[b.rarity])
-    return its
-  }, [items, activeCategory, rarityFilters, sortBy])
+    return items.filter((item) => {
+      const matchesCategory = category === "All" || item.type === category;
+      const matchesSearch = item.name.toLowerCase().includes(search.toLowerCase());
+      return matchesCategory && matchesSearch;
+    });
+  }, [items, category, search]);
 
-  const showWeapons = activeCategory === 'ALL' || activeCategory === 'WEAPONS'
+  const equippedCount = items.filter((item) => item.equipped).length;
+
+  function toggleEquip(id) {
+    setItems((current) =>
+      current.map((item) => ({
+        ...item,
+        equipped: item.id === id ? !item.equipped : item.equipped,
+      }))
+    );
+    setSelected(null);
+  }
+
+  function openCrate() {
+    const rewards = [
+      { name: "Crimson Rifle Skin", icon: "🔫", rarity: "Epic" },
+      { name: "Golden Warrior Outfit", icon: "👑", rarity: "Legendary" },
+      { name: "Shadow Helmet", icon: "🪖", rarity: "Rare" },
+    ];
+
+    const reward = rewards[items.length % rewards.length];
+    setCrateReward(reward);
+    setCrateOpened(true);
+  }
 
   return (
-    <div className="min-h-screen bg-bz-black text-bz-white pb-20">
-      {/* ── Header ── */}
-      <div className="relative bg-bz-surface border-b border-bz-border overflow-hidden">
-        <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-transparent via-bz-red to-transparent" />
-        <div className="absolute inset-0 bg-grid opacity-20" />
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+    <div className="min-h-screen space-y-8 bg-bz-dark p-4 text-white sm:p-6 lg:p-8">
+      <header className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <p className="text-xs font-black uppercase tracking-[0.35em] text-bz-red">
+            Player collection
+          </p>
+          <h1 className="mt-2 text-3xl font-black uppercase sm:text-4xl">
+            My <span className="text-bz-red">Inventory</span>
+          </h1>
+          <p className="mt-2 text-sm text-bz-muted">
+            Manage your weapons, outfits and battlefield equipment.
+          </p>
+        </div>
+        <div className="rounded-lg border border-bz-border bg-bz-panel px-4 py-3">
+          <p className="text-xs text-bz-muted">TOTAL ITEMS</p>
+          <p className="mt-1 text-2xl font-black">{items.length}</p>
+        </div>
+      </header>
+
+      <section className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        {[
+          { label: "Total Items", value: items.length, icon: Package },
+          { label: "Weapons", value: items.filter((i) => i.type === "Weapons").length, icon: Sword },
+          { label: "Outfits", value: items.filter((i) => i.type === "Outfits").length, icon: Shirt },
+          { label: "Equipped", value: equippedCount, icon: Shield },
+        ].map((stat) => {
+          const Icon = stat.icon;
+          return (
+            <div key={stat.label} className="rounded-xl border border-bz-border bg-bz-panel p-5">
+              <div className="flex items-center justify-between text-bz-muted">
+                <span className="text-xs font-bold uppercase">{stat.label}</span>
+                <Icon size={20} className="text-bz-red" />
+              </div>
+              <p className="mt-3 text-3xl font-black">{stat.value}</p>
+            </div>
+          );
+        })}
+      </section>
+
+      <section className="relative overflow-hidden rounded-2xl border border-bz-red/30 bg-gradient-to-r from-bz-panel to-bz-dark p-6 sm:p-8">
+        <div className="pointer-events-none absolute -right-10 -top-16 h-64 w-64 rounded-full bg-bz-red/10 blur-3xl" />
+        <div className="relative flex flex-col items-start justify-between gap-6 sm:flex-row sm:items-center">
           <div>
-            <h1 className="font-display text-2xl sm:text-3xl font-black text-gradient-red tracking-wider">
-              ARMORY & INVENTORY
-            </h1>
-            <p className="text-bz-gray text-xs font-mono mt-1 uppercase tracking-widest">
-              {totalItems} ITEMS IN COLLECTION
+            <div className="flex items-center gap-2 text-bz-red">
+              <Gift size={22} />
+              <span className="text-xs font-black uppercase tracking-widest">Special rewards</span>
+            </div>
+            <h2 className="mt-3 text-2xl font-black uppercase">Mystery Supply Crate</h2>
+            <p className="mt-2 max-w-lg text-sm text-bz-muted">
+              Discover a surprise cosmetic reward from the BATTLE X collection.
             </p>
           </div>
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2 px-4 py-2 rounded-lg border border-bz-gold/30 bg-bz-gold/10">
-              <Coins size={14} className="text-bz-gold" />
-              <span className="font-mono text-sm font-bold text-bz-gold">{mockPlayer.coins.toLocaleString()}</span>
-            </div>
-            <div className="flex items-center gap-2 px-4 py-2 rounded-lg border border-bz-border bg-bz-surface2">
-              <Package size={14} className="text-bz-gray" />
-              <span className="font-mono text-sm font-bold text-bz-white">{totalItems} ITEMS</span>
-            </div>
+          <motion.div
+            animate={{ y: [0, -8, 0], rotate: [0, 3, -3, 0] }}
+            transition={{ repeat: Infinity, duration: 3 }}
+            className="text-7xl"
+          >
+            📦
+          </motion.div>
+          <button
+            onClick={openCrate}
+            className="rounded-lg bg-bz-red px-6 py-3 text-xs font-black uppercase tracking-wider transition hover:bg-red-600"
+          >
+            Open Demo Crate
+          </button>
+        </div>
+      </section>
+
+      <section>
+        <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+          <div>
+            <h2 className="text-xl font-black uppercase">Your Collection</h2>
+            <p className="mt-1 text-xs text-bz-muted">Browse and manage your cosmetic items.</p>
+          </div>
+          <div className="relative w-full sm:w-64">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-bz-muted" size={16} />
+            <input
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Search items..."
+              className="w-full rounded-lg border border-bz-border bg-bz-panel py-3 pl-9 pr-3 text-sm outline-none focus:border-bz-red"
+            />
           </div>
         </div>
-      </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
-
-        {/* ── Category Tabs ── */}
-        <div className="flex gap-1 overflow-x-auto pb-1 border-b border-bz-border">
-          {CATEGORIES.map(cat => (
+        <div className="mt-5 flex flex-wrap gap-2">
+          {categories.map((item) => (
             <button
-              key={cat}
-              onClick={() => setActiveCategory(cat)}
-              className={clsx(
-                'px-4 py-2.5 text-[11px] font-mono font-bold uppercase tracking-wider whitespace-nowrap relative transition-all',
-                activeCategory === cat ? 'text-bz-red' : 'text-bz-gray hover:text-bz-white'
-              )}
+              key={item}
+              onClick={() => setCategory(item)}
+              className={`rounded-lg px-4 py-2 text-xs font-black uppercase transition ${
+                category === item
+                  ? "bg-bz-red text-white"
+                  : "border border-bz-border bg-bz-panel text-bz-muted hover:border-bz-red"
+              }`}
             >
-              {cat}
-              {activeCategory === cat && (
-                <motion.div
-                  layoutId="invTabLine"
-                  className="absolute bottom-0 left-0 right-0 h-0.5 bg-bz-red"
-                />
-              )}
+              {item}
             </button>
           ))}
         </div>
 
-        {/* ── Sort & Filter Bar ── */}
-        <div className="flex flex-wrap items-center gap-4 py-3 px-4 rounded-lg border border-bz-border bg-bz-surface2">
-          <div className="flex items-center gap-2 text-bz-gray text-xs font-mono">
-            <SlidersHorizontal size={12} />
-            SORT:
-          </div>
-          <div className="flex gap-2 flex-wrap">
-            {SORT_OPTIONS.map(s => (
-              <button
-                key={s}
-                onClick={() => setSortBy(s)}
-                className={clsx(
-                  'px-3 py-1 rounded text-[10px] font-mono font-bold uppercase border transition-all',
-                  sortBy === s
-                    ? 'border-bz-red/50 bg-bz-red/10 text-bz-red'
-                    : 'border-bz-border text-bz-gray hover:border-bz-gray/50 hover:text-bz-white'
+        <div className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          {filteredItems.map((item, index) => (
+            <motion.article
+              key={item.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.05 }}
+              onClick={() => setSelected(item)}
+              className="group cursor-pointer overflow-hidden rounded-xl border border-bz-border bg-bz-panel transition hover:-translate-y-1 hover:border-bz-red/60"
+            >
+              <div className="relative flex h-40 items-center justify-center bg-gradient-to-br from-bz-dark to-bz-panel">
+                <span className="text-7xl transition duration-300 group-hover:scale-110">
+                  {item.icon}
+                </span>
+                {item.equipped && (
+                  <span className="absolute left-3 top-3 flex items-center gap-1 rounded bg-bz-green/10 px-2 py-1 text-[9px] font-black text-bz-green">
+                    <Check size={12} /> EQUIPPED
+                  </span>
                 )}
-              >
-                {s}
-              </button>
-            ))}
-          </div>
-          <div className="h-4 w-px bg-bz-border hidden sm:block" />
-          <div className="flex items-center gap-2 text-bz-gray text-xs font-mono">RARITY:</div>
-          <div className="flex gap-2 flex-wrap">
-            {RARITIES.map(r => (
-              <button
-                key={r}
-                onClick={() => toggleRarity(r)}
-                className={clsx(
-                  'flex items-center gap-1.5 px-2.5 py-1 rounded border text-[10px] font-mono font-bold uppercase transition-all',
-                  rarityFilters.includes(r)
-                    ? RARITY_COLORS[r]
-                    : 'border-bz-border text-bz-gray hover:text-bz-white hover:border-bz-gray/50'
-                )}
-              >
-                {rarityFilters.includes(r) && <Check size={9} />}
-                {r}
-              </button>
-            ))}
-          </div>
+                <span className={`absolute right-3 top-3 rounded border px-2 py-1 text-[9px] font-black uppercase ${rarityStyles[item.rarity]}`}>
+                  {item.rarity}
+                </span>
+              </div>
+              <div className="p-4">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-bz-muted">{item.type}</p>
+                <h3 className="mt-2 font-black uppercase">{item.name}</h3>
+                <button className="mt-4 w-full rounded-lg border border-bz-border py-2 text-[10px] font-black uppercase text-gray-300 transition group-hover:border-bz-red group-hover:text-bz-red">
+                  View Item
+                </button>
+              </div>
+            </motion.article>
+          ))}
         </div>
 
-        {/* ── Weapons Section ── */}
-        <AnimatePresence>
-          {showWeapons && (
-            <motion.section
-              key="weapons-section"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.2 }}
-            >
-              {/* Loadout slots */}
-              <div className="mb-6">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-1 h-4 bg-bz-red rounded-full" />
-                  <h2 className="text-xs font-mono font-bold text-bz-gray uppercase tracking-widest">ACTIVE LOADOUT</h2>
-                </div>
-                <div className="flex gap-3 overflow-x-auto pb-2">
-                  {[
-                    { label: 'PRIMARY', weapon: primary, icon: '🔫' },
-                    { label: 'SECONDARY', weapon: secondary, icon: '🔧' },
-                    { label: 'MELEE', weapon: melee, icon: '🗡️' },
-                  ].map(slot => (
-                    <div
-                      key={slot.label}
-                      className={clsx(
-                        'shrink-0 w-48 rounded-lg border p-3 flex items-center gap-3',
-                        slot.weapon
-                          ? 'border-bz-red/30 bg-bz-surface2'
-                          : 'border-dashed border-bz-border bg-transparent'
-                      )}
-                    >
-                      <div className="text-2xl">{slot.weapon ? '🔫' : '➕'}</div>
-                      <div>
-                        <p className="text-[9px] font-mono text-bz-gray uppercase">{slot.label}</p>
-                        <p className="text-xs font-display font-bold text-bz-white">
-                          {slot.weapon ? slot.weapon.name : 'EMPTY'}
-                        </p>
-                        {slot.weapon && <RarityBadge rarity={slot.weapon.rarity} />}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
+        {filteredItems.length === 0 && (
+          <div className="rounded-xl border border-bz-border bg-bz-panel py-12 text-center text-sm text-bz-muted">
+            No inventory items match your search.
+          </div>
+        )}
+      </section>
 
-              {/* Weapons grid */}
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-1 h-4 bg-bz-red rounded-full" />
-                <h2 className="text-xs font-mono font-bold text-bz-gray uppercase tracking-widest">
-                  WEAPONS ({filteredWeapons.length})
-                </h2>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                {filteredWeapons.map((w, idx) => (
-                  <motion.div
-                    key={w.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: idx * 0.06 }}
-                  >
-                    <WeaponCard weapon={w} onEquip={handleEquipWeapon} />
-                  </motion.div>
-                ))}
-              </div>
-            </motion.section>
-          )}
-        </AnimatePresence>
-
-        {/* ── Items Grid ── */}
-        <AnimatePresence>
-          {filteredItems.length > 0 && (
-            <motion.section
-              key="items-section"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.2 }}
+      {selected && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4" onClick={() => setSelected(null)}>
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            onClick={(event) => event.stopPropagation()}
+            className="w-full max-w-md rounded-2xl border border-bz-border bg-bz-panel p-6"
+          >
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-black uppercase tracking-widest text-bz-red">Item details</p>
+              <button onClick={() => setSelected(null)} aria-label="Close item details">
+                <X size={20} className="text-bz-muted" />
+              </button>
+            </div>
+            <div className="py-7 text-center">
+              <span className="text-8xl">{selected.icon}</span>
+              <h2 className="mt-5 text-2xl font-black uppercase">{selected.name}</h2>
+              <span className={`mt-3 inline-block rounded border px-3 py-1 text-xs font-bold ${rarityStyles[selected.rarity]}`}>
+                {selected.rarity}
+              </span>
+              <p className="mt-4 text-sm text-bz-muted">{selected.description}</p>
+            </div>
+            <button
+              onClick={() => toggleEquip(selected.id)}
+              className="w-full rounded-lg bg-bz-red py-3 text-xs font-black uppercase transition hover:bg-red-600"
             >
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-1 h-4 bg-bz-red rounded-full" />
-                <h2 className="text-xs font-mono font-bold text-bz-gray uppercase tracking-widest">
-                  {activeCategory === 'ALL' ? 'ALL ITEMS' : activeCategory} ({filteredItems.length})
-                </h2>
-              </div>
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-                {filteredItems.map((item, idx) => (
-                  <motion.div
-                    key={item.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: idx * 0.05 }}
-                  >
-                    <ItemCard item={item} onEquip={handleEquipItem} />
-                  </motion.div>
-                ))}
-              </div>
-            </motion.section>
-          )}
-        </AnimatePresence>
-      </div>
+              {selected.equipped ? "Unequip Item" : "Equip Item"}
+            </button>
+          </motion.div>
+        </div>
+      )}
+
+      {crateOpened && crateReward && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/85 p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.5, rotate: -8 }}
+            animate={{ opacity: 1, scale: 1, rotate: 0 }}
+            className="w-full max-w-sm rounded-2xl border border-yellow-500/40 bg-bz-panel p-8 text-center"
+          >
+            <Sparkles className="mx-auto text-yellow-400" size={35} />
+            <p className="mt-4 text-xs font-black uppercase tracking-[0.3em] text-yellow-400">Reward unlocked</p>
+            <div className="my-6 text-7xl">{crateReward.icon}</div>
+            <h2 className="text-2xl font-black uppercase">{crateReward.name}</h2>
+            <p className="mt-3 text-sm text-bz-muted">{crateReward.rarity} reward</p>
+            <button
+              onClick={() => setCrateOpened(false)}
+              className="mt-7 w-full rounded-lg bg-bz-red py-3 text-xs font-black uppercase"
+            >
+              Collect Reward
+            </button>
+            <p className="mt-3 text-[10px] text-bz-muted">Demo reward only — not saved to your inventory.</p>
+          </motion.div>
+        </div>
+      )}
+
+      <p className="text-center text-[10px] uppercase tracking-widest text-bz-muted">
+        BATTLE X · Inventory and crate rewards are demonstration features
+      </p>
     </div>
-  )
+  );
 }
