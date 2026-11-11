@@ -1,299 +1,131 @@
-import { useState, useMemo } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { Award, Lock, Check, Zap, Star, Filter } from 'lucide-react'
-import { clsx } from 'clsx'
-import { mockAchievements } from '@/utils/mockData'
 
-// ─── Constants ─────────────────────────────────────────────────────────────────
+import { motion } from "framer-motion";
+import {
+  Award, Crosshair, Crown, Flame, Medal, Shield, Skull, Star,
+  Target, Trophy, Zap, Lock
+} from "lucide-react";
 
-const FILTERS = ['ALL', 'UNLOCKED', 'LOCKED', 'DAILY', 'WEEKLY', 'SEASONAL']
-
-const RARITY_CONFIG = {
-  LEGENDARY: {
-    badge: 'text-bz-gold bg-bz-gold/10 border border-bz-gold/40',
-    glow: 'border-bz-gold/50 shadow-[0_0_18px_rgba(255,215,0,0.2)]',
-    top: 'bg-bz-gold',
-  },
-  EPIC: {
-    badge: 'text-purple-400 bg-purple-400/10 border border-purple-400/30',
-    glow: 'border-purple-400/40',
-    top: 'bg-purple-400',
-  },
-  RARE: {
-    badge: 'text-blue-400 bg-blue-400/10 border border-blue-400/30',
-    glow: 'border-blue-400/30',
-    top: 'bg-blue-400',
-  },
-  COMMON: {
-    badge: 'badge-gray',
-    glow: 'border-bz-border',
-    top: 'bg-bz-gray/40',
-  },
-}
-
-// ─── Sub-components ─────────────────────────────────────────────────────────────
-
-function RarityBadge({ rarity }) {
-  const c = RARITY_CONFIG[rarity] || RARITY_CONFIG.COMMON
-  return (
-    <span className={clsx('px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase', c.badge)}>
-      {rarity}
-    </span>
-  )
-}
-
-function AchievementCard({ achievement, index }) {
-  const { unlocked, rarity, icon, name, description, unlockedAt, xpReward, progress, total } = achievement
-  const rc = RARITY_CONFIG[rarity] || RARITY_CONFIG.COMMON
-  const pct = Math.min((progress / total) * 100, 100)
-  const isLegendary = rarity === 'LEGENDARY'
-
-  return (
-    <motion.div
-      className={clsx(
-        'card relative overflow-hidden p-5 flex flex-col gap-3 transition-all duration-300',
-        unlocked ? rc.glow : 'border-bz-border opacity-70',
-        isLegendary && unlocked ? 'animate-pulse-border' : ''
-      )}
-      initial={{ opacity: 0, y: 20, scale: 0.95 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      transition={{ delay: index * 0.06, duration: 0.35 }}
-      whileHover={{ scale: 1.03, y: -4 }}
-    >
-      {/* Rarity top line */}
-      <div className={clsx('absolute top-0 left-0 right-0 h-0.5', rc.top)} />
-
-      {/* Legendary glow ring (animated) */}
-      {isLegendary && unlocked && (
-        <motion.div
-          className="absolute inset-0 rounded-lg border border-bz-gold/20 pointer-events-none"
-          animate={{ opacity: [0.2, 0.6, 0.2] }}
-          transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
-        />
-      )}
-
-      {/* Lock overlay */}
-      {!unlocked && (
-        <div className="absolute top-3 right-3 z-10">
-          <div className="p-1 rounded bg-bz-surface2 border border-bz-border">
-            <Lock size={11} className="text-bz-gray" />
-          </div>
-        </div>
-      )}
-
-      {/* Unlocked check */}
-      {unlocked && (
-        <div className="absolute top-3 right-3 z-10">
-          <div className="p-1 rounded-full bg-bz-green/20 border border-bz-green/40">
-            <Check size={11} className="text-bz-green" />
-          </div>
-        </div>
-      )}
-
-      {/* Icon */}
-      <div className={clsx(
-        'text-5xl text-center select-none py-2 transition-all',
-        !unlocked && 'grayscale brightness-50'
-      )}>
-        {icon}
-      </div>
-
-      {/* Name & Description */}
-      <div className="text-center">
-        <h3 className={clsx(
-          'font-display text-sm font-bold mb-1',
-          unlocked ? (isLegendary ? 'text-bz-gold' : 'text-bz-white') : 'text-bz-gray'
-        )}>
-          {name}
-        </h3>
-        <p className="text-bz-gray text-[10px] font-sans leading-relaxed">{description}</p>
-      </div>
-
-      {/* Rarity */}
-      <div className="flex justify-center">
-        <RarityBadge rarity={rarity} />
-      </div>
-
-      {/* Unlocked info / Locked progress */}
-      {unlocked ? (
-        <div className="text-center space-y-0.5">
-          <p className="text-bz-green text-[10px] font-mono">✓ UNLOCKED {unlockedAt}</p>
-          <p className="text-bz-gold text-[11px] font-mono font-bold flex items-center justify-center gap-1">
-            <Zap size={9} />
-            +{xpReward.toLocaleString()} XP EARNED
-          </p>
-        </div>
-      ) : (
-        <div className="space-y-2">
-          <div className="flex justify-between text-[10px] font-mono">
-            <span className="text-bz-gray">{progress}/{total}</span>
-            <span className="text-bz-gray flex items-center gap-1">
-              <Zap size={9} className="text-bz-gold opacity-60" />
-              {xpReward.toLocaleString()} XP
-            </span>
-          </div>
-          <div className="stat-bar">
-            <motion.div
-              className="stat-bar-fill"
-              initial={{ width: 0 }}
-              animate={{ width: `${pct}%` }}
-              transition={{ duration: 1, delay: index * 0.06 + 0.2, ease: 'easeOut' }}
-            />
-          </div>
-          <p className="text-bz-gray text-[9px] font-mono text-center">{pct.toFixed(0)}% COMPLETE</p>
-        </div>
-      )}
-    </motion.div>
-  )
-}
-
-// ─── Main Component ─────────────────────────────────────────────────────────────
+const achievements = [
+  { title: "First Blood", description: "Get your first elimination.", category: "Combat", icon: Crosshair, progress: 100, reward: "100 XP", unlocked: true },
+  { title: "Elimination Expert", description: "Reach 100 total eliminations.", category: "Combat", icon: Skull, progress: 100, reward: "250 XP", unlocked: true },
+  { title: "Battle Legend", description: "Win 100 matches.", category: "Wins", icon: Trophy, progress: 86, reward: "500 XP", unlocked: false },
+  { title: "Unstoppable", description: "Win 10 matches in a row.", category: "Wins", icon: Flame, progress: 40, reward: "350 XP", unlocked: false },
+  { title: "Sharp Shooter", description: "Get 500 headshot eliminations.", category: "Combat", icon: Target, progress: 68, reward: "300 XP", unlocked: false },
+  { title: "Elite Warrior", description: "Reach Diamond rank.", category: "Rank", icon: Crown, progress: 100, reward: "600 XP", unlocked: true },
+  { title: "Survivor", description: "Reach top 10 in 50 matches.", category: "Survival", icon: Shield, progress: 72, reward: "400 XP", unlocked: false },
+  { title: "Speed Demon", description: "Complete 20 matches.", category: "Special", icon: Zap, progress: 100, reward: "200 XP", unlocked: true },
+  { title: "Star Player", description: "Earn 10,000 season points.", category: "Special", icon: Star, progress: 88, reward: "450 XP", unlocked: false },
+  { title: "Collector", description: "Unlock 25 achievements.", category: "Special", icon: Medal, progress: 32, reward: "700 XP", unlocked: false },
+];
 
 export default function Achievements() {
-  const [activeFilter, setActiveFilter] = useState('ALL')
-
-  const unlocked = mockAchievements.filter(a => a.unlocked)
-  const totalXP = unlocked.reduce((sum, a) => sum + a.xpReward, 0)
-  const progressPct = (unlocked.length / mockAchievements.length) * 100
-
-  const filtered = useMemo(() => {
-    switch (activeFilter) {
-      case 'UNLOCKED': return mockAchievements.filter(a => a.unlocked)
-      case 'LOCKED': return mockAchievements.filter(a => !a.unlocked)
-      // DAILY/WEEKLY/SEASONAL not in mockData, show subset for demo
-      case 'DAILY': return mockAchievements.filter(a => ['a001', 'a002'].includes(a.id))
-      case 'WEEKLY': return mockAchievements.filter(a => ['a003', 'a005', 'a006'].includes(a.id))
-      case 'SEASONAL': return mockAchievements.filter(a => ['a004', 'a007'].includes(a.id))
-      default: return mockAchievements
-    }
-  }, [activeFilter])
+  const unlocked = achievements.filter((item) => item.unlocked).length;
+  const progress = Math.round((unlocked / achievements.length) * 100);
 
   return (
-    <div className="min-h-screen bg-bz-black text-bz-white pb-20">
+    <div className="min-h-screen space-y-8 bg-bz-dark p-4 text-white sm:p-6 lg:p-8">
+      <header>
+        <p className="text-xs font-black uppercase tracking-[0.35em] text-bz-red">Player rewards</p>
+        <h1 className="mt-2 text-3xl font-black uppercase sm:text-4xl">
+          Achieve <span className="text-bz-red">Greatness</span>
+        </h1>
+        <p className="mt-2 text-sm text-bz-muted">Complete missions, unlock rewards and prove your skill.</p>
+      </header>
 
-      {/* ── Header ── */}
-      <div className="relative bg-bz-surface border-b border-bz-border overflow-hidden">
-        <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-transparent via-bz-red to-transparent" />
-        <div className="absolute inset-0 bg-grid opacity-20" />
-        <div className="absolute -top-10 -right-10 w-72 h-72 bg-bz-gold/5 rounded-full blur-3xl pointer-events-none" />
-
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
-            <div className="flex items-center gap-4">
-              <div className="p-3 rounded-xl bg-bz-red/10 border border-bz-red/30">
-                <Award size={28} className="text-bz-red" />
-              </div>
-              <div>
-                <h1 className="font-display text-2xl sm:text-3xl font-black text-gradient-red tracking-wider">
-                  ACHIEVEMENTS
-                </h1>
-                <p className="text-bz-gold text-xs font-mono mt-1 flex items-center gap-1.5">
-                  <Zap size={10} />
-                  {totalXP.toLocaleString()} XP EARNED
-                </p>
-              </div>
+      <section className="relative overflow-hidden rounded-2xl border border-bz-border bg-bz-panel p-6 sm:p-8">
+        <div className="pointer-events-none absolute -right-10 -top-16 h-64 w-64 rounded-full bg-yellow-500/10 blur-3xl" />
+        <div className="relative grid gap-7 md:grid-cols-[1fr_auto] md:items-center">
+          <div>
+            <div className="flex items-center gap-3">
+              <Trophy className="text-yellow-400" size={30} />
+              <h2 className="text-xl font-black uppercase">Achievement Collection</h2>
             </div>
-
-            {/* Progress indicator */}
-            <div className="w-full sm:w-64">
-              <div className="flex justify-between text-xs font-mono mb-2">
-                <span className="text-bz-gray uppercase tracking-wider">PROGRESS</span>
-                <span className="text-bz-white font-bold">
-                  {unlocked.length}/{mockAchievements.length} UNLOCKED
-                </span>
+            <p className="mt-3 text-sm text-bz-muted">Your journey to becoming a battlefield legend.</p>
+            <div className="mt-6 max-w-xl">
+              <div className="mb-2 flex justify-between text-xs font-bold">
+                <span>OVERALL PROGRESS</span>
+                <span className="text-yellow-400">{progress}%</span>
               </div>
-              <div className="h-3 bg-bz-surface2 rounded-full border border-bz-border overflow-hidden">
+              <div className="h-2 overflow-hidden rounded-full bg-bz-border">
                 <motion.div
-                  className="h-full bg-gradient-to-r from-bz-red to-bz-red/60 rounded-full"
                   initial={{ width: 0 }}
-                  animate={{ width: `${progressPct}%` }}
-                  transition={{ duration: 1.2, ease: 'easeOut' }}
+                  animate={{ width: `${progress}%` }}
+                  transition={{ duration: 1 }}
+                  className="h-full rounded-full bg-yellow-400"
                 />
               </div>
-              <p className="text-bz-gray text-[10px] font-mono mt-1 text-right">{progressPct.toFixed(0)}%</p>
             </div>
           </div>
+          <div className="rounded-xl border border-yellow-500/30 bg-yellow-500/10 p-6 text-center">
+            <p className="text-4xl font-black text-yellow-400">{unlocked}/{achievements.length}</p>
+            <p className="mt-2 text-xs font-bold uppercase tracking-widest text-bz-muted">Unlocked</p>
+          </div>
         </div>
+      </section>
+
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+        {[
+          { label: "Unlocked", value: unlocked, icon: Award },
+          { label: "Locked", value: achievements.length - unlocked, icon: Lock },
+          { label: "Categories", value: "5", icon: Medal },
+          { label: "Bonus XP", value: "1,150", icon: Zap },
+        ].map((item) => {
+          const Icon = item.icon;
+          return (
+            <div key={item.label} className="rounded-xl border border-bz-border bg-bz-panel p-4">
+              <Icon size={20} className="text-bz-red" />
+              <p className="mt-3 text-2xl font-black">{item.value}</p>
+              <p className="mt-1 text-xs text-bz-muted">{item.label}</p>
+            </div>
+          );
+        })}
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
-
-        {/* ── Summary Stats ── */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          {[
-            { label: 'TOTAL', value: mockAchievements.length, icon: Award, color: 'text-bz-white' },
-            { label: 'UNLOCKED', value: unlocked.length, icon: Check, color: 'text-bz-green' },
-            { label: 'LOCKED', value: mockAchievements.length - unlocked.length, icon: Lock, color: 'text-bz-gray' },
-            { label: 'XP EARNED', value: `${(totalXP / 1000).toFixed(1)}K`, icon: Zap, color: 'text-bz-gold' },
-          ].map(stat => (
-            <motion.div
-              key={stat.label}
-              className="card p-4 flex items-center gap-3"
-              whileHover={{ scale: 1.02 }}
-            >
-              <div className="p-2 rounded-lg bg-bz-surface2 border border-bz-border">
-                <stat.icon size={14} className={stat.color} />
-              </div>
-              <div>
-                <p className={clsx('font-mono text-xl font-black', stat.color)}>{stat.value}</p>
-                <p className="text-bz-gray text-[10px] font-mono uppercase">{stat.label}</p>
-              </div>
-            </motion.div>
-          ))}
+      <section>
+        <div className="mb-5 flex items-center justify-between">
+          <h2 className="text-xl font-black uppercase">All Achievements</h2>
+          <span className="text-xs font-bold text-bz-muted">SEASON 01 · DEMO</span>
         </div>
-
-        {/* ── Filter Tabs ── */}
-        <div className="flex border-b border-bz-border overflow-x-auto">
-          {FILTERS.map(f => (
-            <button
-              key={f}
-              onClick={() => setActiveFilter(f)}
-              className={clsx(
-                'px-4 py-3 text-[11px] font-mono font-bold uppercase tracking-widest whitespace-nowrap relative transition-all',
-                activeFilter === f ? 'text-bz-red' : 'text-bz-gray hover:text-bz-white'
-              )}
-            >
-              {f}
-              {/* Count bubble */}
-              {f === 'UNLOCKED' && (
-                <span className="ml-1.5 badge-green text-[8px]">{unlocked.length}</span>
-              )}
-              {f === 'LOCKED' && (
-                <span className="ml-1.5 badge-gray text-[8px]">{mockAchievements.length - unlocked.length}</span>
-              )}
-              {activeFilter === f && (
-                <motion.div
-                  layoutId="achTabLine"
-                  className="absolute bottom-0 left-0 right-0 h-0.5 bg-bz-red"
-                />
-              )}
-            </button>
-          ))}
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          {achievements.map((item, index) => {
+            const Icon = item.icon;
+            return (
+              <motion.article
+                key={item.title}
+                initial={{ opacity: 0, y: 18 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.05 }}
+                className={`rounded-xl border bg-bz-panel p-5 transition hover:-translate-y-1 ${item.unlocked ? "border-yellow-500/30" : "border-bz-border"}`}
+              >
+                <div className="flex items-start justify-between">
+                  <div className={`flex h-12 w-12 items-center justify-center rounded-xl ${item.unlocked ? "bg-yellow-500/10 text-yellow-400" : "bg-bz-dark text-bz-muted"}`}>
+                    <Icon size={24} />
+                  </div>
+                  <span className={`rounded px-2 py-1 text-[9px] font-black uppercase tracking-wider ${item.unlocked ? "bg-yellow-500/10 text-yellow-400" : "bg-bz-dark text-bz-muted"}`}>
+                    {item.unlocked ? "Unlocked" : "In Progress"}
+                  </span>
+                </div>
+                <h3 className="mt-5 font-black uppercase">{item.title}</h3>
+                <p className="mt-2 min-h-10 text-xs leading-5 text-bz-muted">{item.description}</p>
+                <div className="mt-5 flex justify-between text-[10px] font-bold">
+                  <span className="text-bz-muted">{item.category}</span>
+                  <span className="text-yellow-400">{item.reward}</span>
+                </div>
+                <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-bz-border">
+                  <div
+                    className={`h-full rounded-full ${item.unlocked ? "bg-yellow-400" : "bg-bz-red"}`}
+                    style={{ width: `${item.progress}%` }}
+                  />
+                </div>
+                <p className="mt-2 text-right text-[10px] text-bz-muted">{item.progress}% complete</p>
+              </motion.article>
+            );
+          })}
         </div>
-
-        {/* ── Achievements Grid ── */}
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={activeFilter}
-            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-          >
-            {filtered.length === 0 ? (
-              <div className="col-span-full flex flex-col items-center justify-center py-20 text-bz-gray">
-                <div className="text-5xl mb-4">🔍</div>
-                <p className="font-mono text-sm uppercase tracking-wider">NO ACHIEVEMENTS IN THIS CATEGORY</p>
-              </div>
-            ) : (
-              filtered.map((ach, idx) => (
-                <AchievementCard key={ach.id} achievement={ach} index={idx} />
-              ))
-            )}
-          </motion.div>
-        </AnimatePresence>
-      </div>
+      </section>
+      <p className="text-center text-[10px] uppercase tracking-widest text-bz-muted">
+        BATTLE X · Achievement records are demonstration data
+      </p>
     </div>
-  )
+  );
 }
